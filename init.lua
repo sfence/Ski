@@ -7,9 +7,10 @@ local S = minetest.get_translator("Ski")
 -- Helper functions
 --
 
-local function is_water(pos)
+local function is_snow(pos)
 	local nn = minetest.get_node(pos).name
-	return nn == "default:dirt_with_snow" or nn == "default:snowblock" or nn == "default:snow"
+	return nn == "hades_snow:snowblock" or nn == "hades_snow:snow"
+  -- no dirt_with_snow, it will scrape
 end
 
 
@@ -56,8 +57,8 @@ function ski.on_rightclick(self, clicker)
 		self.driver = nil
 		self.auto = true
 		clicker:set_detach()
-		player_api.player_attached[name] = false
-		player_api.set_animation(clicker, "stand" , 30)
+		hades_player.player_attached[name] = false
+		hades_player.player_set_animation(clicker, "stand" , 30)
 		local pos = clicker:get_pos()
 		pos = {x = pos.x, y = pos.y + 0.2, z = pos.z}
 		minetest.after(0.1, function()
@@ -76,9 +77,9 @@ function ski.on_rightclick(self, clicker)
 		self.driver = name
 		clicker:set_attach(self.object, "",
 			{x = 0.5, y = 0, z = -3}, {x = 0, y = 0, z = 0})
-		player_api.player_attached[name] = true
+		hades_player.player_attached[name] = true
 		minetest.after(0.2, function()
-			player_api.set_animation(clicker, "stand" , 30)
+			hades_player.player_set_animation(clicker, "stand" , 30)
 		end)
 		clicker:set_look_horizontal(self.object:get_yaw())
 	end
@@ -115,15 +116,15 @@ function ski.on_punch(self, puncher)
 	if self.driver and name == self.driver then
 		self.driver = nil
 		puncher:set_detach()
-		player_api.player_attached[name] = false
+		hades_player.player_attached[name] = false
 	end
 	if not self.driver then
 		self.removed = true
 		local inv = puncher:get_inventory()
 		if not (creative and creative.is_enabled_for
 				and creative.is_enabled_for(name))
-				or not inv:contains_item("main", "ski:ski") then
-			local leftover = inv:add_item("main", "ski:ski")
+				or not inv:contains_item("main", "hades_ski:ski") then
+			local leftover = inv:add_item("main", "hades_ski:ski")
 			-- if no room in inventory add a replacement ski to the world
 			if not leftover:is_empty() then
 				minetest.add_item(self.object:get_pos(), leftover)
@@ -146,13 +147,13 @@ function ski.on_step(self, dtime)
 			if ctrl.up and ctrl.down then
 				if not self.auto then
 					self.auto = true
-					minetest.chat_send_player(self.driver, S("Boat cruise mode on"))
+					minetest.chat_send_player(self.driver, S("Ski cruise mode on"))
 				end
 			elseif ctrl.down then
 				self.v = self.v - dtime * 2.0
 				if self.auto then
 					self.auto = false
-					minetest.chat_send_player(self.driver, S("Boat cruise mode off"))
+					minetest.chat_send_player(self.driver, S("Ski cruise mode off"))
 				end
 			elseif ctrl.up or self.auto then
 				self.v = self.v + dtime * 2.0
@@ -191,7 +192,7 @@ function ski.on_step(self, dtime)
 	p.y = p.y - 0.001
 	local new_velo
 	local new_acce = {x = 0, y = 0, z = 0}
-	if not is_water(p) then
+	if not is_snow(p) then
 		local nodedef = minetest.registered_nodes[minetest.get_node(p).name]
 		if nodedef.walkable then
 			--self.v = 0
@@ -204,7 +205,7 @@ function ski.on_step(self, dtime)
 		self.object:set_pos(self.object:get_pos())
 	else
 		p.y = p.y + 1
-		if is_water(p) then
+		if is_snow(p) then
 			local y = self.object:get_velocity().y
 			if y >= 10 then
 				y = 10
@@ -234,15 +235,14 @@ function ski.on_step(self, dtime)
 end
 
 
-minetest.register_entity("ski:ski", ski)
+minetest.register_entity("hades_ski:ski", ski)
 
 
-minetest.register_craftitem("ski:ski", {
+minetest.register_craftitem("hades_ski:ski", {
 	description = S("Ski"),
 	inventory_image = "ski_inventory.png",
 	wield_image = "ski_wield.png",
 	wield_scale = {x = 2, y = 2, z = 1},
-	liquids_pointable = true,
 	groups = {flammable = 2},
 
 	on_place = function(itemstack, placer, pointed_thing)
@@ -259,11 +259,11 @@ minetest.register_craftitem("ski:ski", {
 		if pointed_thing.type ~= "node" then
 			return itemstack
 		end
-		if not is_water(pointed_thing.under) then
+		if not is_snow(pointed_thing.under) then
 			return itemstack
 		end
 		pointed_thing.under.y = pointed_thing.under.y + 0.5
-		ski = minetest.add_entity(pointed_thing.under, "ski:ski")
+		ski = minetest.add_entity(pointed_thing.under, "hades_ski:ski")
 		if ski then
 			if placer then
 				ski:set_yaw(placer:get_look_horizontal())
@@ -280,16 +280,17 @@ minetest.register_craftitem("ski:ski", {
 
 
 minetest.register_craft({
-	output = "ski:ski",
+	output = "hades_ski:ski",
 	recipe = {
-		{"group:wood", "", "" },
-		{"", "group:wood", ""},
-		{"", "", "group:wood"},
+		{"group:wood", "palm:wax", "" },
+		{"group.stick", "group:wood", "group.stick"},
+		{"", "palm:wax", "group:wood"},
 	},
 })
 
 minetest.register_craft({
 	type = "fuel",
-	recipe = "ski:ski",
+	recipe = "hades_ski:ski",
 	burntime = 20,
 })
+
