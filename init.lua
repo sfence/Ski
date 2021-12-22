@@ -206,8 +206,7 @@ function ski.on_step(self, dtime)
 			end
 		else
 			new_acce = {x = 0, y = -10, z = 0}
-			self.v = self.v + dtime*5
-			print("add "..(dtime))
+			self.v = self.v + dtime*3
 		end
 		-- no snow, no drive speed add
 		new_velo = get_velocity(self.v, self.object:get_yaw(),
