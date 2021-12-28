@@ -295,7 +295,7 @@ minetest.register_craft({
 	output = "hades_ski:ski",
 	recipe = {
 		{"group:wood", "palm:wax", "" },
-		{"group.stick", "group:wood", "group.stick"},
+		{"group:stick", "group:wood", "group:stick"},
 		{"", "palm:wax", "group:wood"},
 	},
 })
