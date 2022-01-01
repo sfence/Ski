@@ -7,8 +7,7 @@ local S = minetest.get_translator("Ski")
 -- Helper functions
 --
 
-local function is_snow(pos)
-	local nn = minetest.get_node(pos).name
+local function is_snow(nn) -- node_name
 	return nn == "default:dirt_with_snow" or nn == "default:snowblock" or nn == "default:snow"
 end
 
@@ -189,10 +188,13 @@ function ski.on_step(self, dtime)
 	end
 	local p = self.object:get_pos()
 	p.y = p.y - 0.001
+	local under_node = minetest.get_node(p)
+	p.y = p.y + 1
+	local above_node = minetest.get_node(p)
 	local new_velo
 	local new_acce = {x = 0, y = 0, z = 0}
-	if not is_snow(p) then
-		local nodedef = minetest.registered_nodes[minetest.get_node(p).name]
+	if not is_snow(under_node.name) and not is_snow(above_node.name) then
+		local nodedef = minetest.registered_nodes[under_node.name]
 		if nodedef.walkable then
 			--self.v = 0
 			new_acce = {x = 0, y = 0.01, z = 0}
@@ -215,7 +217,7 @@ function ski.on_step(self, dtime)
 		-- snow, apply drive velocity
 		self.v = self.v + drive_v
 		p.y = p.y + 1
-		if is_snow(p) then
+		if is_snow(above_node.name) then
 			local y = self.object:get_velocity().y
 			if y >= 10 then
 				y = 10
@@ -271,7 +273,7 @@ minetest.register_craftitem("ski:ski", {
 		if pointed_thing.type ~= "node" then
 			return itemstack
 		end
-		if not is_snow(pointed_thing.under) then
+		if not is_snow(node.name) then
 			return itemstack
 		end
 		pointed_thing.under.y = pointed_thing.under.y + 0.5
