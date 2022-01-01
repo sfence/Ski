@@ -14,7 +14,7 @@ end
 
 local function get_velocity(v, yaw, y)
 	local x = -math.sin(yaw) * v
-	local z =  math.cos(yaw) * v
+	local z =	math.cos(yaw) * v
 	return {x = x, y = y, z = z}
 end
 
@@ -63,7 +63,7 @@ function ski.on_rightclick(self, clicker)
 			clicker:set_pos(pos)
 		end)
 	elseif not self.driver then
-        self.auto = false
+				self.auto = false
 		local attach = clicker:get_attach()
 		if attach and attach:get_luaentity() then
 			local luaentity = attach:get_luaentity()
@@ -193,26 +193,40 @@ function ski.on_step(self, dtime)
 	local above_node = minetest.get_node(p)
 	local new_velo
 	local new_acce = {x = 0, y = 0, z = 0}
-	if not is_snow(under_node.name) and not is_snow(above_node.name) then
-		local nodedef = minetest.registered_nodes[under_node.name]
-		if nodedef.walkable then
-			--self.v = 0
-			new_acce = {x = 0, y = 0.01, z = 0}
-			-- no snow drag
-			drag = dtime*5
-			if math.abs(self.v) <= math.abs(drag) then
-				self.v = 0
+	if not is_snow(under_node.name) then
+		if not is_snow(above_node.name) then
+			local nodedef = minetest.registered_nodes[under_node.name]
+			if nodedef.walkable then
+				--self.v = 0
+				new_acce = {x = 0, y = 0.01, z = 0}
+				-- no snow drag
+				drag = dtime*5
+				if math.abs(self.v) <= math.abs(drag) then
+					self.v = 0
+				else
+					self.v = self.v - drag
+				end
 			else
-				self.v = self.v - drag
+				new_acce = {x = 0, y = -10, z = 0}
+				self.v = self.v + dtime*3
 			end
+			-- no snow, no drive speed add
+			new_velo = get_velocity(self.v, self.object:get_yaw(),
+				self.object:get_velocity().y)
+			self.object:set_pos(self.object:get_pos())
 		else
-			new_acce = {x = 0, y = -10, z = 0}
-			self.v = self.v + dtime*3
+			-- snow above, apply drive velocity
+			local nodedef = minetest.registered_nodes[under_node.name]
+			if nodedef.walkable then
+				--self.v = 0
+				new_acce = {x = 0, y = 0.01, z = 0}
+			else
+				new_acce = {x = 0, y = -10, z = 0}
+			end
+			self.v = self.v + drive_v
+			new_velo = get_velocity(self.v, self.object:get_yaw(), self.object:get_velocity().y)
+			self.object:set_pos(self.object:get_pos())
 		end
-		-- no snow, no drive speed add
-		new_velo = get_velocity(self.v, self.object:get_yaw(),
-			self.object:get_velocity().y)
-		self.object:set_pos(self.object:get_pos())
 	else
 		-- snow, apply drive velocity
 		self.v = self.v + drive_v
@@ -256,7 +270,6 @@ minetest.register_craftitem("ski:ski", {
 	inventory_image = "ski_inventory.png",
 	wield_image = "ski_wield.png",
 	wield_scale = {x = 2, y = 2, z = 1},
-	liquids_pointable = true,
 	groups = {flammable = 2},
 
 	on_place = function(itemstack, placer, pointed_thing)
