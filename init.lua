@@ -34,9 +34,11 @@ local ski = {
 		-- Warning: Do not change the position of the collisionbox top surface,
 		-- lowering it causes the ski to fall through the world if underwater
 		collisionbox = {-0.3, 0.2, -0.2, 0.3, 0.3, 0.2},
+		selectionbox = {-0.4, 0.0, -0.4, 0.4, 0.5, 0.4},
 		visual = "mesh",
 		mesh = "ski.obj",
 		textures = {"default_wood.png"},
+		stepheight = 0.3,
 	},
 
 	driver = nil,
